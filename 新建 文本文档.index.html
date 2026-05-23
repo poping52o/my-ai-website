@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原神天赋升级材料计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #555;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #f9f9f9;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 16px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4facfe;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .level-selector {
+            display: flex;
+            gap: 20px;
+        }
+
+        .level-selector .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(0);
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .material-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .material-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .material-name {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .material-count {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .material-type {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .ad-space {
+            width: 300px;
+            height: 250px;
+            margin: 0 auto;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 13px;
+            border-top: 1px solid #eee;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .level-selector {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .materials-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .material-count {
+                font-size: 24px;
+            }
+
+            .ad-space {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>原神天赋升级材料计算器</h1>
+            <p>快速计算角色天赋升级所需的所有材料</p>
+        </div>
+
+        <div class="main-content">
+            <div class="form-group">
+                <label for="character">选择角色</label>
+                <select id="character">
+                    <option value="">请选择角色</option>
+                    <!-- 蒙德角色 -->
+                    <option value="amber">安柏</option>
+                    <option value="barbara">芭芭拉</option>
+                    <option value="beidou">北斗</option>
+                    <option value="bennett">班尼特</option>
+                    <option value="diluc">迪卢克</option>
+                    <option value="diona">迪奥娜</option>
+                    <option value="eula">优菈</option>
+                    <option value="fischl">菲谢尔</option>
+                    <option value="jean">琴</option>
+                    <option value="kaeya">凯亚</option>
+                    <option value="klee">可莉</option>
+                    <option value="lisa">丽莎</option>
+                    <option value="mona">莫娜</option>
+                    <option value="noelle">诺艾尔</option>
+                    <option value="razor">雷泽</option>
+                    <option value="rosaria">罗莎莉亚</option>
+                    <option value="sucrose">砂糖</option>
+                    <option value="venti">温迪</option>
+                    <option value="xiangling">香菱</option>
+                    <option value="xingqiu">行秋</option>
+                    <!-- 璃月角色 -->
+                    <option value="chongyun">重云</option>
+                    <option value="ganyu">甘雨</option>
+                    <option value="hu_tao">胡桃</option>
+                    <option value="keqing">刻晴</option>
+                    <option value="ningguang">凝光</option>
+                    <option value="qiqi">七七</option>
+                    <option value="tartaglia">达达利亚</option>
+                    <option value="xiao">魈</option>
+                    <option value="xinyan">辛焱</option>
+                    <option value="yanfei">烟绯</option>
+                    <option value="zhongli">钟离</option>
+                    <!-- 稻妻角色 -->
+                    <option value="ayaka">神里绫华</option>
+                    <option value="ayato">神里绫人</option>
+                    <option value="gorou">五郎</option>
+                    <option value="itto">荒泷一斗</option>
+                    <option value="kazuha">枫原万叶</option>
+                    <option value="kokomi">珊瑚宫心海</option>
+                    <option value="raiden">雷电将军</option>
+                    <option value="sara">九条裟罗</option>
+                    <option value="sayu">早柚</option>
+                    <option value="thoma">托马</option>
+                    <option value="yoimiya">宵宫</option>
+                    <option value="yunjin">云堇</option>
+                    <!-- 须弥角色 -->
+                    <option value="candace">坎蒂丝</option>
+                    <option value="collei">柯莱</option>
+                    <option value="cyno">赛诺</option>
+                    <option value="dehya">迪希雅</option>
+                    <option value="dori">多莉</option>
+                    <option value="faruzan">珐露珊</option>
+                    <option value="kaveh">卡维</option>
+                    <option value="layla">莱依拉</option>
+                    <option value="nahida">纳西妲</option>
+                    <option value="nilou">妮露</option>
+                    <option value="tighnari">提纳里</option>
+                    <option value="wandere">流浪者</option>
+                    <!-- 枫丹角色 -->
+                    <option value="furina">芙宁娜</option>
+                    <option value="lyney">林尼</option>
+                    <option value="lynette">琳妮特</option>
+                    <option value="navia">娜维娅</option>
+                    <option value="neuvillette">那维莱特</option>
+                    <option value="wriothesley">莱欧斯利</option>
+                    <!-- 纳塔角色 -->
+                    <option value="mavuika">玛薇卡</option>
+                    <option value="kinich">基尼奇</option>
+                    <option value="xilonen">希诺宁</option>
+                </select>
+            </div>
+
+            <div class="level-selector">
+                <div class="form-group">
+                    <label for="currentLevel">当前天赋等级</label>
+                    <select id="currentLevel">
+                        <option value="1">1级</option>
+                        <option value="2">2级</option>
+                        <option value="3">3级</option>
+                        <option value="4">4级</option>
+                        <option value="5">5级</option>
+                        <option value="6">6级</option>
+                        <option value="7">7级</option>
+                        <option value="8">8级</option>
+                        <option value="9">9级</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="targetLevel">目标天赋等级</label>
+                    <select id="targetLevel">
+                        <option value="2">2级</option>
+                        <option value="3">3级</option>
+                        <option value="4">4级</option>
+                        <option value="5">5级</option>
+                        <option value="6">6级</option>
+                        <option value="7">7级</option>
+                        <option value="8">8级</option>
+                        <option value="9">9级</option>
+                        <option value="10">10级</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-calculate" id="calculateBtn">计算所需材料</button>
+
+            <div class="result-section" id="resultSection">
+                <h3 class="result-title">天赋升级所需材料</h3>
+                <div class="materials-grid">
+                    <div class="material-card">
+                        <div class="material-name">摩拉</div>
+                        <div class="material-count" id="moraCount">0</div>
+                        <div class="material-type">金币</div>
+                    </div>
+                    <div class="material-card">
+                        <div class="material-name" id="book1Name">初级天赋书</div>
+                        <div class="material-count" id="book1Count">0</div>
+                        <div class="material-type">天赋书</div>
+                    </div>
+                    <div class="material-card">
+                        <div class="material-name" id="book2Name">中级天赋书</div>
+                        <div class="material-count" id="book2Count">0</div>
+                        <div class="material-type">天赋书</div>
+                    </div>
+                    <div class="material-card">
+                        <div class="material-name" id="book3Name">高级天赋书</div>
+                        <div class="material-count" id="book3Count">0</div>
+                        <div class="material-type">天赋书</div>
+                    </div>
+                    <div class="material-card">
+                        <div class="material-name" id="bossMaterialName">BOSS材料</div>
+                        <div class="material-count" id="bossMaterialCount">0</div>
+                        <div class="material-type">周本掉落</div>
+                    </div>
+                    <div class="material-card">
+                        <div class="material-name" id="commonMaterialName">普通材料</div>
+                        <div class="material-count" id="commonMaterialCount">0</div>
+                        <div class="material-type">怪物掉落</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 广告位 -->
+            <div class="ad-space">
+                广告位 300×250<br>
+                可放置您的广告内容
+            </div>
+        </div>
+
+        <div class="footer">
+            原神天赋升级材料计算器 | 数据基于游戏最新版本
+        </div>
+    </div>
+
+    <script>
+        // 角色天赋升级材料数据
+        const characterData = {
+            // 蒙德角色 - 自由系列
+            amber: { books: ["自由的教导", "自由的指引", "自由的哲学"], boss: "东风的吐息", common: "导能绘卷" },
+            barbara: { books: ["自由的教导", "自由的指引", "自由的哲学"], boss: "东风的吐息", common: "导能绘卷" },
+            diona: { books: ["自由的教导", "自由的指引", "自由的哲学"], boss: "东风的吐息", common: "箭簇" },
+            klee: { books: ["自由的教导", "自由的指引", "自由的哲学"], boss: "东风的吐息", common: "导能绘卷" },
+            sucrose: { books: ["自由的教导", "自由的指引", "自由的哲学"], boss: "东风的吐息", common: "史莱姆凝液" },
+            venti: { books: ["自由的教导", "自由的指引", "自由的哲学"], boss: "东风的吐息", common: "史莱姆凝液" },
+            
+            // 蒙德角色 - 抗争系列
+            bennett: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "史莱姆凝液" },
+            diluc: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "史莱姆凝液" },
+            eula: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "破损的面具" },
+            fischl: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "箭簇" },
+            jean: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "导能绘卷" },
+            mona: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "史莱姆凝液" },
+            noelle: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "破损的面具" },
+            razor: { books: ["抗争的教导", "抗争的指引", "抗争的哲学"], boss: "北风之尾", common: "破损的面具" },
+            
+            // 蒙德角色 - 诗文系列
+            kaeya: { books: ["诗文的教导", "诗文的指引", "诗文的哲学"], boss: "东风的翎羽", common: "破损的面具" },
+            lisa: { books: ["诗文的教导", "诗文的指引", "诗文的哲学"], boss: "东风的翎羽", common: "史莱姆凝液" },
+            rosaria: { books: ["诗文的教导", "诗文的指引", "诗文的哲学"], boss: "东风的翎羽", common: "破损的面具" },
+            xingqiu: { books: ["诗文的教导", "诗文的指引", "诗文的哲学"], boss: "东风的翎羽", common: "导能绘卷" },
+            
+            // 璃月角色 - 勤劳系列
+            beidou: { books: ["勤劳的教导", "勤劳的指引", "勤劳的哲学"], boss: "黄金之屋", common: "鸦印" },
+            chongyun: { books: ["勤劳的教导", "勤劳的指引", "勤劳的哲学"], boss: "黄金之屋", common: "史莱姆凝液" },
+            hu_tao: { books: ["勤劳的教导", "勤劳的指引", "勤劳的哲学"], boss: "黄金之屋", common: "骗骗花蜜" },
+            xiangling: { books: ["勤劳的教导", "勤劳的指引", "勤劳的哲学"], boss: "黄金之屋", common: "史莱姆凝液" },
+            xinyan: { books: ["勤劳的教导", "勤劳的指引", "勤劳的哲学"], boss: "黄金之屋", common: "鸦印" },
+            
+            // 璃月角色 - 黄金系列
+            keqing: { books: ["黄金的教导", "黄金的指引", "黄金的哲学"], boss: "吞天之鲸", common: "史莱姆凝液" },
+            ningguang: { books: ["黄金的教导", "黄金的指引", "黄金的哲学"], boss: "吞天之鲸", common: "鸦印" },
+            tartaglia: { books: ["黄金的教导", "黄金的指引", "黄金的哲学"], boss: "吞天之鲸", common: "骗骗花蜜" },
+            yanfei: { books: ["黄金的教导", "黄金的指引", "黄金的哲学"], boss: "吞天之鲸", common: "导能绘卷" },
+            zhongli: { books: ["黄金的教导", "黄金的指引", "黄金的哲学"], boss: "吞天之鲸", common: "史莱姆凝液" },
+            
+            // 璃月角色 - 繁荣系列
+            ganyu: { books: ["繁荣的教导", "繁荣的指引", "繁荣的哲学"], boss: "若陀龙王", common: "骗骗花蜜" },
+            qiqi: { books: ["繁荣的教导", "繁荣的指引", "繁荣的哲学"], boss: "若陀龙王", common: "骗骗花蜜" },
+            xiao: { books: ["繁荣的教导", "繁荣的指引", "繁荣的哲学"], boss: "若陀龙王", common: "史莱姆凝液" },
+            yunjin: { books: ["繁荣的教导", "繁荣的指引", "繁荣的哲学"], boss: "若陀龙王", common: "鸦印" },
+            
+            // 稻妻角色 - 浮世系列
+            ayaka: { books: ["浮世的教导", "浮世的指引", "浮世的哲学"], boss: "祸神之禊泪", common: "破旧的刀镡" },
+            ayato: { books: ["浮世的教导", "浮世的指引", "浮世的哲学"], boss: "祸神之禊泪", common: "破旧的刀镡" },
+            itto: { books: ["浮世的教导", "浮世的指引", "浮世的哲学"], boss: "祸神之禊泪", common: "破旧的刀镡" },
+            yoimiya: { books: ["浮世的教导", "浮世的指引", "浮世的哲学"], boss: "祸神之禊泪", common: "破旧的刀镡" },
+            
+            // 稻妻角色 - 风雅系列
+            kazuha: { books: ["风雅的教导", "风雅的指引", "风雅的哲学"], boss: "血玉之枝", common: "破旧的刀镡" },
+            kokomi: { books: ["风雅的教导", "风雅的指引", "风雅的哲学"], boss: "血玉之枝", common: "浮游干核" },
+            sayu: { books: ["风雅的教导", "风雅的指引", "风雅的哲学"], boss: "血玉之枝", common: "浮游干核" },
+            thoma: { books: ["风雅的教导", "风雅的指引", "风雅的哲学"], boss: "血玉之枝", common: "破旧的刀镡" },
+            
+            // 稻妻角色 - 天光系列
+            gorou: { books: ["天光的教导", "天光的指引", "天光的哲学"], boss: "灰烬之心", common: "浮游干核" },
+            raiden: { books: ["天光的教导", "天光的指引", "天光的哲学"], boss: "灰烬之心", common: "破旧的刀镡" },
+            sara: { books: ["天光的教导", "天光的指引", "天光的哲学"], boss: "灰烬之心", common: "破旧的刀镡" },
+            
+            // 须弥角色 - 巧思系列
+            candace: { books: ["巧思的教导", "巧思的指引", "巧思的哲学"], boss: "雷霆数珠", common: "孢囊晶尘" },
+            cyno: { books: ["巧思的教导", "巧思的指引", "巧思的哲学"], boss: "雷霆数珠", common: "孢囊晶尘" },
+            layla: { books: ["巧思的教导", "巧思的指引", "巧思的哲学"], boss: "雷霆数珠", common: "孢囊晶尘" },
+            nilou: { books: ["巧思的教导", "巧思的指引", "巧思的哲学"], boss: "雷霆数珠", common: "孢囊晶尘" },
+            
+            // 须弥角色 - 笃行系列
+            collei: { books: ["笃行的教导", "笃行的指引", "笃行的哲学"], boss: "空梦的碎刃", common: "孢囊晶尘" },
+            dori: { books: ["笃行的教导", "笃行的指引", "笃行的哲学"], boss: "空梦的碎刃", common: "孢囊晶尘" },
+            tighnari: { books: ["笃行的教导", "笃行的指引", "笃行的哲学"], boss: "空梦的碎刃", common: "孢囊晶尘" },
+            wandere: { books: ["笃行的教导", "笃行的指引", "笃行的哲学"], boss: "空梦的碎刃", common: "导能绘卷" },
+            
+            // 须弥角色 - 诤言系列
+            dehya: { books: ["诤言的教导", "诤言的指引", "诤言的哲学"], boss: "永劫龙兽", common: "谧林涓露" },
+            faruzan: { books: ["诤言的教导", "诤言的指引", "诤言的哲学"], boss: "永劫龙兽", common: "谧林涓露" },
+            kaveh: { books: ["诤言的教导", "诤言的指引", "诤言的哲学"], boss: "永劫龙兽", common: "谧林涓露" },
+            nahida: { books: ["诤言的教导", "诤言的指引", "诤言的哲学"], boss: "永劫龙兽", common: "谧林涓露" },
+            
+            // 枫丹角色 - 公平系列
+            furina: { books: ["公平的教导", "公平的指引", "公平的哲学"], boss: "吞星之鲸", common: "异色结晶" },
+            lyney: { books: ["公平的教导", "公平的指引", "公平的哲学"], boss: "吞星之鲸", common: "异色结晶" },
+            lynette: { books: ["公平的教导", "公平的指引", "公平的哲学"], boss: "吞星之鲸", common: "异色结晶" },
+            
+            // 枫丹角色 - 秩序系列
+            navia: { books: ["秩序的教导", "秩序的指引", "秩序的哲学"], boss: "原海之麟", common: "异色结晶" },
+            neuvillette: { books: ["秩序的教导", "秩序的指引", "秩序的哲学"], boss: "原海之麟", common: "异色结晶" },
+            
+            // 枫丹角色 - 正义系列
+            wriothesley: { books: ["正义的教导", "正义的指引", "正义的哲学"], boss: "苍晶螺", common: "异色结晶" },
+            
+            // 纳塔角色
+            mavuika: { books: ["勇气的教导", "勇气的指引", "勇气的哲学"], boss: "焚天之焰", common: "燃素结晶" },
+            kinich: { books: ["勇气的教导", "勇气的指引", "勇气的哲学"], boss: "焚天之焰", common: "燃素结晶" },
+            xilonen: { books: ["勇气的教导", "勇气的指引", "勇气的哲学"], boss: "焚天之焰", common: "燃素结晶" }
+        };
+
+        // 天赋升级所需材料数量表
+        const upgradeCosts = {
+            1: { mora: 0, book1: 0, book2: 0, book3: 0, boss: 0, common: 0 },
+            2: { mora: 12500, book1: 3, book2: 0, book3: 0, boss: 0, common: 6 },
+            3: { mora: 17500, book1: 6, book2: 0, book3: 0, boss: 0, common: 9 },
+            4: { mora: 25000, book1: 12, book2: 0, book3: 0, boss: 0, common: 12 },
+            5: { mora: 30000, book1: 0, book2: 6, book3: 0, boss: 0, common: 18 },
+            6: { mora: 37500, book1: 0, book2: 9, book3: 0, boss: 0, common: 21 },
+            7: { mora: 120000, book1: 0, book2: 12, book3: 0, boss: 1, common: 24 },
+            8: { mora: 260000, book1: 0, book2: 0, book3: 6, boss: 1, common: 30 },
+            9: { mora: 450000, book1: 0, book2: 0, book3: 9, boss: 2, common: 36 },
+            10: { mora: 700000, book1: 0, book2: 0, book3: 12, boss: 2, common: 45 }
+        };
+
+        // DOM元素
+        const characterSelect = document.getElementById('character');
+        const currentLevelSelect = document.getElementById('currentLevel');
+        const targetLevelSelect = document.getElementById('targetLevel');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultSection = document.getElementById('resultSection');
+
+        // 计算按钮点击事件
+        calculateBtn.addEventListener('click', function() {
+            const characterId = characterSelect.value;
+            const currentLevel = parseInt(currentLevelSelect.value);
+            const targetLevel = parseInt(targetLevelSelect.value);
+
+            // 验证输入
+            if (!characterId) {
+                alert('请选择一个角色');
+                return;
+            }
+
+            if (currentLevel >= targetLevel) {
+                alert('目标等级必须大于当前等级');
+                return;
+            }
+
+            // 获取角色数据
+            const charData = characterData[characterId];
+            
+            // 计算所需材料
+            let totalMora = 0;
+            let totalBook1 = 0;
+            let totalBook2 = 0;
+            let totalBook3 = 0;
+            let totalBoss = 0;
+            let totalCommon = 0;
+
+            for (let level = currentLevel + 1; level <= targetLevel; level++) {
+                const cost = upgradeCosts[level];
+                totalMora += cost.mora;
+                totalBook1 += cost.book1;
+                totalBook2 += cost.book2;
+                totalBook3 += cost.book3;
+                totalBoss += cost.boss;
+                totalCommon += cost.common;
+            }
+
+            // 更新结果显示
+            document.getElementById('moraCount').textContent = totalMora.toLocaleString();
+            
+            document.getElementById('book1Name').textContent = charData.books[0];
+            document.getElementById('book1Count').textContent = totalBook1;
+            
+            document.getElementById('book2Name').textContent = charData.books[1];
+            document.getElementById('book2Count').textContent = totalBook2;
+            
+            document.getElementById('book3Name').textContent = charData.books[2];
+            document.getElementById('book3Count').textContent = totalBook3;
+            
+            document.getElementById('bossMaterialName').textContent = charData.boss;
+            document.getElementById('bossMaterialCount').textContent = totalBoss;
+            
+            document.getElementById('commonMaterialName').textContent = charData.common;
+            document.getElementById('commonMaterialCount').textContent = totalCommon;
+
+            // 显示结果区域
+            resultSection.classList.add('show');
+            
+            // 滚动到结果区域
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // 目标等级选择事件 - 确保目标等级大于当前等级
+        currentLevelSelect.addEventListener('change', function() {
+            const currentLevel = parseInt(this.value);
+            const targetOptions = targetLevelSelect.options;
+            
+            for (let i = 0; i < targetOptions.length; i++) {
+                const optionValue = parseInt(targetOptions[i].value);
+                targetOptions[i].disabled = optionValue <= currentLevel;
+            }
+            
+            // 如果当前选中的目标等级小于等于当前等级，自动选择下一个可用等级
+            if (parseInt(targetLevelSelect.value) <= currentLevel) {
+                for (let i = 0; i < targetOptions.length; i++) {
+                    if (!targetOptions[i].disabled) {
+                        targetLevelSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        });
+
+        // 页面加载时初始化目标等级选项
+        window.addEventListener('load', function() {
+            currentLevelSelect.dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>
